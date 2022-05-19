@@ -1,3 +1,4 @@
+#pragma comment(lib,"opencv_world455.lib")
 #include "opencv2/opencv.hpp"
 #include <iostream>
 using namespace std;
