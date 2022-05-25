@@ -1,9 +1,11 @@
 #pragma comment(lib,"opencv_world455.lib")
+
 #include "opencv2/opencv.hpp"
 #include <iostream>
 using namespace std;
 using namespace cv;
 
+// DFT를 셔플링한다
 void shuffleDFT(Mat& img)
 {
 	int cX = img.cols / 2;
@@ -22,6 +24,8 @@ void shuffleDFT(Mat& img)
 	q3.copyTo(q2);
 	tmp.copyTo(q3);
 }
+
+// DFT를 출력한다
 void displayDFT(Mat& img)
 {
 	Mat img_arr[2] = { Mat::zeros(img.size(), CV_32F), Mat::zeros(img.size(), CV_32F) };
@@ -41,21 +45,86 @@ void displayDFT(Mat& img)
 	// 0에서 255로 범위로 정규화한다.
 	normalize(mag_img, mag_img, 0, 1, NORM_MINMAX);
 	imshow("DFT", mag_img);
+	waitKey(0);
 }
 
+// tapering을 적용하기 위한 버터워쓰 필터
+Mat getFilterTapering(Size size)
+{
+	Mat dft_Filter = Mat(size, CV_32F);
+	Point center = Point(dft_Filter.rows / 2, dft_Filter.cols / 2);
+	double radius;
+	double D = 50;
+	double n = 2;
+
+	for (int i = 0; i < dft_Filter.rows; i++)
+	{
+		for (int j = 0; j < dft_Filter.cols; j++)
+		{
+			radius = (double)std::sqrt(std::pow((i - center.x), 2.0) + std::pow((double)(j - center.y), 2.0));
+			dft_Filter.at<float>(i, j) = (float)(1 / (1 + std::pow((double)(radius / D), (double)(2 * n))));
+		}
+	}
+	Mat toMerge[] = { dft_Filter, dft_Filter };
+	Mat filter;
+	merge(toMerge, 2, filter);
+	return filter;
+}
+
+void lowhighpass_filter(cv::Mat& dft_Filter, int D, int n, bool highpass)
+{
+	dft_Filter = cv::Mat(dft_Filter.rows, dft_Filter.cols, CV_32F, cv::Scalar::all(0));
+
+	cv::Point centre = cv::Point(dft_Filter.rows / 2, dft_Filter.cols / 2);
+	double radius;
+
+	// based on the forumla in the IP notes (p. 130 of 2009/10 version)
+	for (int i = 0; i < dft_Filter.rows; i++)
+	{
+		for (int j = 0; j < dft_Filter.cols; j++)
+		{
+			radius = (double)std::sqrt(std::pow((i - centre.x), 2.0) + std::pow((double)(j - centre.y), 2.0));
+			dft_Filter.at<float>(i, j) = (float)(1 / (1 + std::pow((double)(radius / D), (double)(2 * n))));
+		}
+	}
+
+	if (highpass)
+	{
+		dft_Filter = cv::Scalar::all(1) - dft_Filter;
+		//cv::imshow("highpass_filter", dft_Filter);
+	}
+
+	cv::Mat toMerge[] = { dft_Filter, dft_Filter };
+	cv::merge(toMerge, 2, dft_Filter);
+}
 int main()
 {
-	Mat src = imread("C:\\Users\\kim\\source\\repos\\OpenCV\\lenna.png", IMREAD_GRAYSCALE);
-	Mat src_float, dft_img;
+	Mat src = imread("C:\\Users\\bank2\\source\\repos\\OpenCV_project\\lenna.png", IMREAD_GRAYSCALE);
+	Mat src_float;
 
-	// 그레이스케일 영상을 실수 영상으로 변환한다.
+	// 그레이스케일 영상을 실수 영상으로 변환한고 DFT를 취한뒤 셔플링한다
 	src.convertTo(src_float, CV_32FC1, 1.0 / 255.0);
-
-	// DFT 변환을 수행한다.
+	Mat dft_img;
 	dft(src_float, dft_img, DFT_COMPLEX_OUTPUT);
 	shuffleDFT(dft_img);
-	displayDFT(dft_img);
+
+	// lowpass 필터를 취한다
+	Mat lowpass = getFilterTapering(dft_img.size());
+	Mat resultLow;
+	//// highpass 필터를 취한다
+	//Mat Highpass = getFilterTapering(dft_img.size());
+	//Mat resultHigh;
+
+	// 필터와 DFT 영상을 곱한뒤 result에 저장하고 출력한다
+	multiply(dft_img, lowpass, resultLow);
+	displayDFT(resultLow);
 	
+	// DFT에서 영상으로 역변환하고 출력한다
+	Mat inverted_img;
+	shuffleDFT(resultLow);
+	idft(resultLow, inverted_img, DFT_SCALE | DFT_REAL_OUTPUT);
+	imshow("inverted img", inverted_img);
+
 	waitKey(0);
 	return 0;
 }
