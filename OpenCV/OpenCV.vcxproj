@@ -47,15 +47,15 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(SolutionDir)build\include</IncludePath>
     <LibraryPath>$(SolutionDir)build\x64\vc14\lib\;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)Bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)Temp\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)Bin\$(Platform)\$(Configuration)</OutDir>
+    <IntDir>$(SolutionDir)Temp\$(Platform)\$(Configuration)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(SolutionDir)build\include</IncludePath>
     <LibraryPath>$(SolutionDir)build\x64\vc14\lib\;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)Bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)Temp\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)Bin\$(Platform)\$(Configuration)</OutDir>
+    <IntDir>$(SolutionDir)Temp\$(Platform)\$(Configuration)</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
